@@ -21,15 +21,23 @@ public class ClockHand : MonoBehaviour
     private float currentAngle;
     private bool spinning;
 
-    void Start()
+
+    void Awake() // Prepare the hand before gameplay begins
     {
-        StopRound();
+        StopRound(); // Reset rotation and speed
     }
+
+    void OnDisable()
+    {
+        Debug.Log("ClockHand has been disabled!");
+    }
+
 
     void Update()
     {
         if (!spinning)
             return;
+
 
         float previousAngle = currentAngle;
 
@@ -74,6 +82,7 @@ public class ClockHand : MonoBehaviour
 
     public void BeginRound() // Here we go!
     {
+
         currentSpeed = startingSpeed;
         currentAngle = startingAngle;
         spinning = true;
