@@ -21,10 +21,10 @@ public class PlayerInput : MonoBehaviour
         if (keyboard == null)
             return;
 
-        CheckButton(keyboard.digit1Key, 0); // Activates Player 1 (Martin1)
-        CheckButton(keyboard.digit2Key, 1); // Activates Player 2 (Martin2)
-        CheckButton(keyboard.digit3Key, 2); // Activates Player 3 (Dragon1)
-        CheckButton(keyboard.digit4Key, 3); // Activates Player 4 (Dragon2)
+        CheckButton(keyboard.sKey, 0); // Activates Player 1 (Martin1)
+        CheckButton(keyboard.dKey, 1); // Activates Player 2 (Martin2)
+        CheckButton(keyboard.fKey, 2); // Activates Player 3 (Dragon1)
+        CheckButton(keyboard.gKey, 3); // Activates Player 4 (Dragon2)
     }
 
     void CheckButton(KeyControl key, int playerIndex)
