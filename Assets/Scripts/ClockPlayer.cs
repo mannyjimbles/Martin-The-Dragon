@@ -3,8 +3,8 @@ using UnityEngine;
 
 // Hopper Studios [AC, GW, JC, JG, JP]
 
-// Clock Player script, handles jumping and elimination
-// All four characters use this same script, lovely
+// Clock Player script, handles jumping, ghosting and returning to play
+// Nobody gets eliminated anymore, everybody gets another chance! :)
 
 public class ClockPlayer : MonoBehaviour
 {
@@ -13,23 +13,40 @@ public class ClockPlayer : MonoBehaviour
     public GameManager gameManager;
 
     [Header("Appearance")]
-    public Transform characterVisual; // Sprite that jumps up and down
+    public Transform characterVisual;
 
     [Header("Jump Settings")]
-    public float jumpDuration = 0.7f; // How long a jump lasts
-    public float jumpScale = 1.4f; // How big the sprite gets mid-jump
+    public float jumpDuration = 0.7f;
+    public float jumpScale = 1.4f;
+
+    [Header("Ghost Settings")]
+    public float ghostDuration = 5f; // Five seconds in ghost jail
+    public float ghostOpacity = 0.3f; // Make the character transparent
 
     private bool isAlive;
     private bool isJumping;
+    private bool isGhost;
+
     private float jumpTimer;
+    private float ghostTimer;
+
     private Vector3 originalScale;
+    private SpriteRenderer spriteRenderer;
+    private Color originalColour;
 
     public bool IsAlive => isAlive;
-    public bool IsSafe => isAlive && isJumping;
+    public bool IsGhost => isGhost;
+    public bool IsSafe => isAlive && isJumping && !isGhost;
 
     void Awake()
     {
         originalScale = characterVisual.localScale;
+
+        spriteRenderer =
+            characterVisual.GetComponent<SpriteRenderer>();
+
+        if (spriteRenderer != null)
+            originalColour = spriteRenderer.color;
     }
 
     void OnEnable()
@@ -44,21 +61,34 @@ public class ClockPlayer : MonoBehaviour
 
     void Update()
     {
+        if (isGhost)
+        {
+            ghostTimer -= Time.deltaTime;
+
+            if (ghostTimer <= 0f)
+                ReturnFromGhost();
+
+            return; // Ghosts can't jump, spooky
+        }
+
         if (!isJumping)
             return;
 
         jumpTimer += Time.deltaTime;
 
-        // Smoothly grow and shrink during the jump
-        float progress = Mathf.Clamp01(jumpTimer / jumpDuration);
+        // Same jumping animation as before
+        float progress =
+            Mathf.Clamp01(jumpTimer / jumpDuration);
+
         float height = Mathf.Sin(progress * Mathf.PI);
 
         characterVisual.localScale =
-            originalScale * (1f + height * (jumpScale - 1f));
+            originalScale *
+            (1f + height * (jumpScale - 1f));
 
         if (jumpTimer >= jumpDuration)
         {
-            isJumping = false; // Back on the ground
+            isJumping = false;
             characterVisual.localScale = originalScale;
         }
     }
@@ -69,10 +99,10 @@ public class ClockPlayer : MonoBehaviour
             return;
 
         if (pressedPlayer != playerIndex)
-            return; // That's somebody else's button!
+            return; // Wrong podium, pal
 
-        if (!isAlive || isJumping)
-            return; // Can't jump if dead or already jumping
+        if (!isAlive || isJumping || isGhost)
+            return; // No jumping in ghost jail!
 
         Jump();
     }
@@ -83,27 +113,63 @@ public class ClockPlayer : MonoBehaviour
         jumpTimer = 0f;
     }
 
+    public void DemoJump() // Automatically jump in the demonstration
+    {
+        if (!isAlive || isJumping || isGhost)
+            return;
+
+        Jump();
+    }
+
+    public void BecomeGhost() // Bonk! You're a ghost now
+    {
+        if (!isAlive || isGhost)
+            return;
+
+        isGhost = true;
+        isJumping = false;
+        ghostTimer = ghostDuration;
+
+        characterVisual.localScale = originalScale;
+
+        // Make our poor contestant semi-transparent
+        if (spriteRenderer != null)
+        {
+            Color ghostColour = originalColour;
+            ghostColour.a = ghostOpacity;
+            spriteRenderer.color = ghostColour;
+        }
+
+        gameManager.UpdateGameScores();
+    }
+
+    void ReturnFromGhost() // Welcome back to the living!
+    {
+        isGhost = false;
+        ghostTimer = 0f;
+
+        if (spriteRenderer != null)
+            spriteRenderer.color = originalColour;
+
+        gameManager.UpdateGameScores();
+    }
+
     public void PreparePlayer(bool participating)
     {
         isAlive = participating;
         isJumping = false;
+        isGhost = false;
+
         jumpTimer = 0f;
+        ghostTimer = 0f;
 
         characterVisual.localScale = originalScale;
+
+        if (spriteRenderer != null)
+            spriteRenderer.color = originalColour;
+
         characterVisual.gameObject.SetActive(participating);
     }
-
-    public void Eliminate() // Ded
-    {
-        if (!isAlive)
-            return;
-
-        isAlive = false;
-        isJumping = false;
-
-        characterVisual.gameObject.SetActive(false);
-
-        gameManager.PlayerEliminated();
-    }
 }
+
 
