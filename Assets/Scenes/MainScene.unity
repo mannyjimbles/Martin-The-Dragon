@@ -7729,8 +7729,8 @@ MonoBehaviour:
   - {fileID: 1929223442}
   - {fileID: 137545682}
   startingSpeed: 45
-  acceleration: 8
-  maximumSpeed: 540
+  acceleration: 6
+  maximumSpeed: 400
   startingAngle: 315
   demoSpeed: 100
   demoStartingAngle: 315
